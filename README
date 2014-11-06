@@ -1,0 +1,68 @@
+go-tls-srp is an implementation of TLS-SRP, https://tools.ietf.org/html/rfc5054
+
+TLS-SRP lets a client make a secure, authenticated TLS (SSL)
+connection to a server with only a username and password. No
+certificates are needed. No certificate authorities have to be
+trusted.
+
+This implementation is based on a stripped down version of Go's
+crypto/tls package.  It only implements the non-certificate ciphers
+from RFC5054 (because it was simpler, and not needing certificates
+is the whole point of TLS-SRP), in order of preference:
+- SRP-SHA1 with AES-256-CBC,SHA1
+- SRP-SHA1 with AES-128-CBC,SHA1
+- SRP-SHA1 with 3DES-CBC,SHA1
+
+Supported TLS extensions:
+- SNI, server name indication
+- Ticket sessions
+- SRP (obviously)
+
+Other extensions from crypto/tls are not relevant for SRP, or will
+be deprecated.
+
+go-tls-srp is based on crypto/tls from the 1.2.1 Go release branch.
+The plan is to keep it updated with later release branches, and
+maybe more.
+
+Both the client and server implementation have been tested against
+the client and server implementations of GnuTLS and OpenSSL.
+
+This library should not yet be considered ready for use. Another
+security review would be nice, and more experience using it.
+
+
+# Documentation
+
+See http://godoc.org/bitbucket.org/mjl/go-tls-srp for documentation.
+
+See ex/ for simple, working examples of clients and servers.
+
+
+# Contact
+
+For feedback, questions, changes etc, contact me at mechiel@ueber.net.
+
+
+# Todo
+
+- test that username/passwords that are not valid utf-8 do work
+- redo current test cases and include the exact commands that were used to generate them
+- write test case for two authentication attempts to server with invalid username, ensure that we get the same salt twice (so attacker cannot probe for (in)valid accounts)
+- write test cases so all N,g groups are covered
+- figure out why disappearing servers do not cause read errors for clients (and probably vice versa).
+
+Maybe:
+
+- integrate srp support back into go's crypto/tls.  but perhaps not, the api/interface might become ugly, the use case for srp vs "normal" certificated-based tls is quite different. also, the code will be more complicated, because some messages take on an other form under srp.
+- implement srp's certificate-related ciphers.
+- different interface for clients to pass in username & password (though it's nice and simple like it is now, and since this library only has srp ciphers, you know you will need a password before starting the connection, to there is not much use delaying reading a password)
+- try to clear memory with sensitive data in it (like passwords).  not sure if this is possible in go.  how do you overwrite a string?
+- be more strict in handling usernames: always use []byte form, never string
+
+
+# License
+
+Since this code is based on Go's crypto/tls package, the same license
+applies (see LICENSE). My changes are released under the same
+conditions.

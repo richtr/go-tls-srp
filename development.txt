@@ -1,0 +1,41 @@
+some tips & tricks for testing.
+
+
+# testing with openssl:
+
+openssl srp -srpvfile passwd -userinfo "blah" -add glen  # "touch passwd" first
+openssl s_server -msg -debug -tlsextdebug -nocert -cipher SRP -srpvfile passwd -accept 4444
+openssl s_client -msg -debug -tlsextdebug -srpuser glen -cipher SRP -connect localhost:4444
+openssl s_client -reconnect -msg -debug -tlsextdebug -srpuser glen -cipher SRP -connect localhost:4444
+
+
+# example of message TLS-SRP message exchange:
+
+<<< TLS 1.0 Handshake [length 0053], ClientHello
+>>> TLS 1.0 Handshake [length 003a], ServerHello
+>>> TLS 1.0 Handshake [length 0820], ServerKeyExchange
+>>> TLS 1.0 Handshake [length 0004], ServerHelloDone
+<<< TLS 1.0 Handshake [length 0406], ClientKeyExchange
+<<< TLS 1.0 ChangeCipherSpec [length 0001]
+<<< TLS 1.0 Handshake [length 0010], Finished
+>>> TLS 1.0 Handshake [length 00ba]???
+>>> TLS 1.0 ChangeCipherSpec [length 0001]
+>>> TLS 1.0 Handshake [length 0010], Finished
+
+
+# testing with gnutls:
+
+srptool --create-conf tpasswd.conf
+srptool --passwd tpasswd --passwd-conf tpasswd.conf -u glen
+
+gnutls-serv --echo --port 10443 --priority NORMAL:-KX-ALL:+SRP --srppasswdconf tpasswd.conf --srppasswd tpasswd
+
+
+gnutls-cli --priority NORMAL:-KX-ALL:+SRP --srpusername glen --srppasswd glenda -p 4444 localhost
+gnutls-cli --resume --priority NORMAL:-KX-ALL:+SRP --srpusername glen --srppasswd glenda -p 4444 localhost
+gnutls-cli -d999 --priority NORMAL:-KX-ALL:+SRP --srpusername glen --srppasswd glenda -p 4444 localhost
+
+
+# testing with curl (likely with openssl):
+
+curl -4 --tlsuser glen --tlspassword glenda -k https://localhost:4444/
